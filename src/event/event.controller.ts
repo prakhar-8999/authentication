@@ -15,7 +15,7 @@ export class EventController {
   }
 
   @AuthenticationGuard([roles.ADMIN])
-  @Get('event-registrations')
+  @Get('event-registration')
   async getAllEvents(): Promise<EventRegistration[]> {
     return this.eventRegistrationService.getAllEvents();
   }

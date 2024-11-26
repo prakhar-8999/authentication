@@ -1,0 +1,26 @@
+services:
+  nestjs:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    networks:
+      - auth
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: auth
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: auth
+    ports:
+      - "3306:3306"
+    networks:
+      - auth
+
+networks:
+  auth:
+    driver: bridge

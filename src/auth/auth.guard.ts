@@ -9,16 +9,16 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { ROLES_KEY } from 'src/constants/decorators/AuthDecorator';
+import { jwtConstants } from 'src/constants/jwtSecretKey';
 import { UsersService } from 'src/users/users.service';
 
-import { jwtConstants } from './constants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private userRepository: UsersService,
-    private readonly reflector: Reflector // Use Reflector to access metadata // private readonly roles: string[] = []
+    private readonly reflector: Reflector
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,11 +28,26 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException();
     }
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: jwtConstants.secret,
-    });
 
-    const user: any = await this.userRepository.findById(payload.UserId);
+    let payload
+
+    try {
+      payload = await this.jwtService.verifyAsync(token, {
+        secret: jwtConstants.secret,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    
+
+    if(!payload){
+      throw new UnauthorizedException("token is invalid or expired!");
+    }
+
+    
+
+    const user: any = await this.userRepository.findById(payload.userId);
+    
 
     if (!user) {
       throw new UnauthorizedException('User not found');

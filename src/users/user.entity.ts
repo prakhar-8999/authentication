@@ -3,23 +3,23 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
-  Id: number;
+  id: number;
 
   @Column({ unique: true })
-  Email: string;
+  email: string;
 
   @Column()
-  Password: string;
+  password: string;
 
   @Column()
-  FirstName: string;
+  firstName: string;
 
   @Column()
-  LastName: string;
+  lastName: string;
 
   @CreateDateColumn()
-  CreatedAt: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  UpdatedAt: Date;
+  updatedAt: Date;
 }

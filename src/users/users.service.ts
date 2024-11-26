@@ -11,17 +11,12 @@ import { UserInterface } from './user.schema';
 import { UserRole } from './userroles.entity';
 
 export interface responseInterface {
-  authenticated: boolean;
-  userId: number;
-  token: string;
-  Role: string;
+  message: string
 }
 
-export const tempRoles = {
-  runner: 0,
-  coach: 1,
-};
-
+interface userRequestInterface extends Partial<UserInterface>{
+  role: "ADMIN" | "USER"
+}
 @Injectable()
 export class UsersService {
   constructor(
@@ -35,12 +30,10 @@ export class UsersService {
   ) {}
 
   async findOne(email: string): Promise<User | undefined> {
-    return this.userRepository.findOne({ where: { UserName: email } });
+    return this.userRepository.findOne({ where: { email: email } });
   }
 
-  async findAllByType(type: number): Promise<User[] | undefined> {
-    return this.userRepository.find({ where: { Type: type } });
-  }
+  
 
   async findRole(id: number): Promise<UserRole | undefined> {
     return this.userRoleRepository.findOne({
@@ -55,7 +48,7 @@ export class UsersService {
 
   async findById(id: number): Promise<User | undefined> {
     // Fetch user by ID
-    const user = await this.userRepository.findOne({ where: { Id: id } });
+    const user = await this.userRepository.findOne({ where: { id: id } });
     if (!user) {
       return null;
     }
@@ -67,96 +60,63 @@ export class UsersService {
     });
 
     const response: any = {};
-    response.id = user.Id;
-    response.FirstName = user.FirstName;
-    response.LastName = user.LastName;
-    response.Email = user.Email;
+    response.id = user.id;
+    response.FirstName = user.firstName;
+    response.LastName = user.lastName;
+    response.Email = user.email;
     response.role = userRole?.role.NormalizedName || null;
     response.roleId = userRole?.RoleId;
 
     return response;
   }
 
-  async create(request: Partial<UserInterface>): Promise<responseInterface> {
-    const alreadyUser = this.userRepository.findOne({
-      where: { UserName: request.Email, Deleted: false },
+  async create(request: userRequestInterface): Promise<responseInterface> {
+    const alreadyUser = await this.userRepository.findOne({
+      where: { email: request.email },
     });
-    if (!alreadyUser) {
+    
+    if (alreadyUser) {
       throw new BadRequestException('Email Already Registered!');
     }
 
+    const password = await bcrypt.hash(request.password, 10)
+
     const user = this.userRepository.create({
-      FirstName: request.FirstName,
-      LastName: request.LastName,
-      UserName: request.Email,
-      Email: request.Email,
-      SecurityStamp: crypto.randomUUID(),
-      LastUpdatedAt: new Date(),
-      CreatedAt: new Date(),
-      PasswordHash: await bcrypt.hash(request.Password, 10),
-      Type: request.Type,
-      Active: true,
-      Deleted: false,
-      EmailConfirmed: false,
-      PhoneNumberConfirmed: false,
-      TwoFactorEnabled: false,
-      LockoutEnabled: true,
-      AccessFailedCount: 1,
+      firstName: request.firstName,
+      lastName: request.lastName,
+      email: request.email,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      password: password
     });
 
-    const result = await this.userRepository.save(user);
-    // console.log(result);
-
-    if (!result) {
-      throw new BadRequestException('Registration Failed');
+    if (!request.role) {
+      throw new BadRequestException('Please provide role!');
     }
 
-    let role;
-    role = await this.roleRepository.findOne({
+    const role = await this.roleRepository.findOne({
       where: {
-        NormalizedName: request.Type === tempRoles.runner ? 'RUNNER' : 'COACH',
+        NormalizedName: request.role,
       },
     });
-    // if (request.Type === ) {
-    //   role = await this.roleRepository.findOne({
-    //     where: { Id: roles.COACH },
-    //   });
-    // } else if (request.Type === roles.RUNNER) {
-    //   role = await this.roleRepository.findOne({
-    //     where: { Id: roles.RUNNER },
-    //   });
-    // }
 
-    // Ensure that role exists before proceeding
     if (!role) {
       throw new BadRequestException('Role not found');
     }
 
-    // Create the UserRole entity
+    const result = await this.userRepository.save(user);
+    if (!result) {
+      throw new BadRequestException('Registration Failed');
+    }
+
     const userRole = this.userRoleRepository.create({
-      UserId: result.Id,
+      UserId: result.id,
       RoleId: role.Id,
     });
 
-    // Save the user role to the database
     await this.userRoleRepository.save(userRole);
 
-    const payload = {
-      UserId: user.Id,
-      username: user.Email,
-      Role: request.Type === tempRoles.runner ? 'Runner' : 'Coach',
-      Email: user.Email,
-      FirstName: user.FirstName,
-      LastName: user.LastName,
-    };
-    const token = await this.jwtService.signAsync(payload);
-
-    return {
-      authenticated: true,
-      userId: user.Id,
-      token: token,
-      Role: request.Type === tempRoles.runner ? 'Runner' : 'Coach',
-    };
+    return {"message": "User registered successfully!"};
   }
 
   async getAllUsers(): Promise<any[]> {
@@ -165,14 +125,13 @@ export class UsersService {
 
     for (const user of users) {
       const userResponse: any = {};
-      userResponse.id = user.Id;
-      userResponse.FirstName = user.FirstName;
-      userResponse.LastName = user.LastName;
-      userResponse.Email = user.Email;
+      userResponse.id = user.id;
+      userResponse.firstName = user.firstName;
+      userResponse.lastName = user.lastName;
+      userResponse.email = user.email;
 
-      // Fetch role for the user
       const userRole = await this.userRoleRepository.findOne({
-        where: { UserId: user.Id },
+        where: { UserId: user.id },
         relations: ['role'],
       });
 

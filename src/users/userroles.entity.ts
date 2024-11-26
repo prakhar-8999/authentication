@@ -1,4 +1,4 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryColumn, Unique } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
 import { Role } from './roles.entity';
 import { User } from './user.entity';
@@ -18,31 +18,9 @@ export class UserRole {
   @JoinColumn({ name: 'RoleId' })
   role: Role;
 
-  @ManyToOne(() => User, (user) => user.Id, {
+  @ManyToOne(() => User, (user) => user.id, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'UserId' })
   user: User;
-  // @PrimaryColumn()
-  // @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  // @JoinColumn({ name: 'UserId' })
-  // UserId: User; // Represents the foreign key column in the database
-
-  // @PrimaryColumn()
-  // @ManyToOne(() => Role, { onDelete: 'CASCADE' })
-  // @JoinColumn({ name: 'RoleId' })
-  // RoleId: Role; // Represents the foreign key column in the database
-
-  // // @PrimaryGeneratedColumn()
-  // // Id: number;
-  // // @PrimaryGeneratedColumn()
-  // @PrimaryColumn()
-  // @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  // @JoinColumn({ name: 'UserId' }) // Explicitly define the column name
-  // UserId: User;
-
-  // @PrimaryColumn()
-  // @ManyToOne(() => Role, { onDelete: 'CASCADE' })
-  // @JoinColumn({ name: 'RoleId' }) // Explicitly define the column name
-  // RoleId: Role;
 }

@@ -5,7 +5,7 @@ import { UsersModule } from '../users/users.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { jwtConstants } from './constants';
+import { jwtConstants } from 'src/constants/jwtSecretKey';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { jwtConstants } from './constants';
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,
-      signOptions: {},
+      signOptions: {expiresIn: '2h'},
     }),
   ],
   providers: [AuthService],

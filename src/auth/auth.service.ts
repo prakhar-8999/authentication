@@ -3,9 +3,9 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../users/users.service';
+import { UserInterface } from 'src/users/user.schema';
 
 export interface loginResponseInterface {
-  signInStatus: boolean;
   token: string;
   userId: number;
 }
@@ -26,35 +26,34 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid User!');
     }
-    const isValid = await bcrypt.compare(pass, user?.PasswordHash);
+    const isValid = await bcrypt.compare(pass, user?.password);
 
     if (!isValid) {
       throw new UnauthorizedException('Incorrect Password!');
     }
-    const role = await this.usersService.findRole(user.Id);
+    const role = await this.usersService.findRole(user.id);
 
     if (!role) {
       throw new UnauthorizedException('No role assigned!');
     }
 
     const payload = {
-      UserId: user.Id,
-      username: user.Email,
-      Role: role.role.Name,
-      Email: user.Email,
-      FirstName: user.FirstName,
-      LastName: user.LastName,
+      userId: user.id,
+      role: role.role.Name,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
     };
 
+    const token = await this.jwtService.signAsync(payload)
+    
     return {
-      signInStatus: isValid,
-      token: await this.jwtService.signAsync(payload),
-      userId: user.Id,
+      token: token,
+      userId: user.id,
     };
   }
 
-  // eslint-disable-next-line require-await
-  async register(userData: any) {
+  async register(userData: UserInterface) {
     return this.usersService.create(userData);
   }
 }

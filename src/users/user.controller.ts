@@ -8,13 +8,17 @@ import {
 } from '@nestjs/common';
 
 import { UsersService } from './users.service';
+import { AuthenticationGuard } from 'src/constants/decorators/AuthDecorator';
+import { roles } from 'src/constants/roles';
+import { User } from './user.entity';
 
 @Controller('api/users')
 export class UserController {
   constructor(private readonly userService: UsersService) {}
 
+  @AuthenticationGuard([roles.ADMIN])
   @Get('')
-  async getUsers(): Promise<any[]> {
+  async getUsers(): Promise<User[]> {
     try {
       return await this.userService.getAllUsers();
     } catch (error) {
@@ -25,17 +29,13 @@ export class UserController {
     }
   }
 
+  @AuthenticationGuard([roles.ADMIN, roles.USER])
   @Get(':id')
-  async getUserById(@Param('id') id: number): Promise<any> {
+  async getUserById(@Param('id') id: number): Promise<User> {
     const user = await this.userService.findById(id);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     return user;
   }
-
-  // @Get("getUsers")
-  // async findAll(): Promise<User[]> {
-  //   return this.userService.findAll();
-  // }
 }

@@ -13,27 +13,23 @@ import {
 
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
+import { User } from 'src/users/user.entity';
+import { UserInterface } from 'src/users/user.schema';
 
 @Controller('api')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @HttpCode(HttpStatus.OK)
-  @Post('authenticate/register')
-  async register(@Body() registerDto: any) {
-    return this.authService.register(registerDto);
+  @Post('auth/register')
+  async register(@Body() registerData: UserInterface) {
+    return this.authService.register(registerData);
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('authenticate/login')
+  @Post('auth/login')
   signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(signInDto.Email, signInDto.Password);
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+    return this.authService.signIn(signInDto.email, signInDto.password);
   }
 }
 
